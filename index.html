@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Los Amigos | Comida Casera y Abundante</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            800: '#92400e',
+                            900: '#78350f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 h-full flex flex-col font-sans" x-data="app()">
+
+    <!-- HEADER / HERO -->
+    <header class="bg-gradient-to-r from-amber-700 via-amber-800 to-amber-900 text-white shadow-lg sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3 text-center sm:text-left">
+                <div class="bg-white/10 p-3 rounded-xl backdrop-blur-sm border border-white/20">
+                    <i class="fa-solid fa-utensils text-3xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight uppercase">Delivery Los Amigos</h1>
+                    <p class="text-amber-200 text-xs sm:text-sm font-medium">Comida casera, abundante y económica como en casa</p>
+                </div>
+            </div>
+
+            <!-- BOTONES DE NAVEGACIÓN SUPERIOR -->
+            <div class="flex flex-wrap justify-center gap-2">
+                <button @click="currentTab = 'catalogo'" :class="currentTab === 'catalogo' ? 'bg-white text-amber-900 shadow' : 'bg-amber-900/60 text-white hover:bg-amber-800'" class="px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i> Menú
+                </button>
+                <button @click="currentTab = 'planificador'" :class="currentTab === 'planificador' ? 'bg-white text-amber-900 shadow' : 'bg-amber-900/60 text-white hover:bg-amber-800'" class="px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 relative">
+                    <i class="fa-solid fa-calendar-days"></i> Armar Plan
+                    <span x-show="cart.length > 0" x-text="cart.length" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold animate-pulse"></span>
+                </button>
+                <button @click="currentTab = 'especial'" :class="currentTab === 'especial' ? 'bg-white text-amber-900 shadow' : 'bg-amber-900/60 text-white hover:bg-amber-800'" class="px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Pedido Especial
+                </button>
+                <button @click="currentTab = 'pendientes'" :class="currentTab === 'pendientes' ? 'bg-white text-amber-900 shadow' : 'bg-amber-900/60 text-white hover:bg-amber-800'" class="px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Mis Pendientes
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- AVISO DE FOTOS ILUSTRATIVAS -->
+    <div class="bg-amber-100 border-b border-amber-200 text-amber-900 px-4 py-2 text-xs sm:text-sm text-center font-medium shadow-inner">
+        <i class="fa-solid fa-circle-info mr-1.5 text-amber-700"></i>
+        <strong>Nota importante:</strong> Las fotografías son de carácter representativo y sirven únicamente como guía visual para realizar los pedidos; no constituyen una representación exacta del envío diario.
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- VISTA 1: CATÁLOGO DE MENÚS -->
+        <section x-show="currentTab === 'catalogo'" x-transition>
+            <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div>
+                    <h2 class="text-xl font-black text-slate-900 uppercase">Catálogo de Comidas Caseras</h2>
+                    <p class="text-slate-500 text-sm">Elegí tus platos favoritos, combinalos como quieras y armá tu plan semanal o mensual.</p>
+                </div>
+                <!-- Buscador y filtro -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-search absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                        <input type="text" x-model="searchQuery" placeholder="Buscar comida..." class="pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 w-full sm:w-64">
+                    </div>
+                    <select x-model="selectedCategory" class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                        <option value="todos">Todas las categorías</option>
+                        <option value="principal">Platos Principales</option>
+                        <option value="guarnicion">Guarniciones</option>
+                        <option value="postre">Postres</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- GRILLA DE PLATOS -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="item in filteredDishes" :key="item.id">
+                    <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition border border-slate-100 flex flex-col justify-between">
+                        <div>
+                            <div class="relative h-48 overflow-hidden bg-slate-200">
+                                <img :src="item.image" :alt="item.name" class="w-full h-full object-cover hover:scale-105 transition duration-500">
+                                <span class="absolute top-3 left-3 bg-amber-900/80 backdrop-blur-md text-amber-200 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider" x-text="item.categoryText"></span>
+                            </div>
+                            <div class="p-5">
+                                <h3 class="font-bold text-lg text-slate-900 mb-1" x-text="item.name"></h3>
+                                <p class="text-slate-600 text-xs mb-3 leading-relaxed" x-text="item.description"></p>
+                                
+                                <div class="space-y-2 text-xs text-slate-500">
+                                    <div class="flex items-start gap-1.5" x-show="item.ingredients">
+                                        <i class="fa-solid fa-basket-shopping text-amber-600 mt-0.5"></i>
+                                        <span><strong class="text-slate-700">Ingredientes:</strong> <span x-text="item.ingredients"></span></span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5" x-show="item.hasGuarnicion">
+                                        <i class="fa-solid fa-plate-wheat text-amber-600"></i>
+                                        <span class="text-amber-800 font-semibold">Incluye opción de guarnición</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-5 pt-0">
+                            <button @click="openConfigModal(item)" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-sm">
+                                <i class="fa-solid fa-calendar-plus"></i> Seleccionar y Agregar
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- VISTA 2: PLANIFICADOR / CARRITO -->
+        <section x-show="currentTab === 'planificador'" x-transition>
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
+                    <div>
+                        <h2 class="text-xl font-black text-slate-900 uppercase">Organizador de Almuerzos (Carrito)</h2>
+                        <p class="text-slate-500 text-sm">Revisá tus comidas seleccionadas, fechas y cantidades. Cero precios públicos.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="bg-amber-100 text-amber-900 font-bold px-4 py-2 rounded-xl text-sm" x-text="cart.length + ' Plato(s) seleccionado(s)'"></span>
+                        <button @click="cart = []" x-show="cart.length > 0" class="text-red-500 hover:text-red-700 text-xs font-bold px-3 py-2 border border-red-200 rounded-xl transition">
+                            <i class="fa-solid fa-trash"></i> Vaciar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SI EL CARRITO ESTÁ VACÍO -->
+                <div x-show="cart.length === 0" class="text-center py-16">
+                    <div class="w-20 h-20 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                        <i class="fa-solid fa-basket-shopping"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-1">Aún no seleccionaste platos</h3>
+                    <p class="text-slate-500 text-sm mb-6 max-w-md mx-auto">Explorá nuestro catálogo de comidas caseras y armá tu plan diario, semanal o mensual a medida.</p>
+                    <button @click="currentTab = 'catalogo'" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition shadow">
+                        Ver Menú y Empezar
+                    </button>
+                </div>
+
+                <!-- LISTA DE ITEMS SELECCIONADOS -->
+                <div x-show="cart.length > 0" class="mt-6 space-y-4">
+                    <template x-for="(entry, index) in cart" :key="index">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center p-4 bg-slate-50 rounded-2xl border border-slate-200 gap-4">
+                            <div class="flex items-center gap-4">
+                                <img :src="entry.image" class="w-16 h-16 rounded-xl object-cover shadow-sm">
+                                <div>
+                                    <h4 class="font-bold text-slate-900 text-base" x-text="entry.name"></h4>
+                                    <div class="flex flex-wrap gap-2 mt-1 text-xs text-slate-600 font-medium">
+                                        <span class="bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                                            <i class="fa-solid fa-calendar text-amber-600 mr-1"></i> <span x-text="entry.date"></span>
+                                        </span>
+                                        <span class="bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                                            <i class="fa-solid fa-utensils text-amber-600 mr-1"></i> <span x-text="entry.portions + ' Porción(es)'"></span>
+                                        </span>
+                                        <span x-show="entry.guarnicion" class="bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                                            <i class="fa-solid fa-plate-wheat text-amber-600 mr-1"></i> Guarnición: <strong x-text="entry.guarnicion"></strong>
+                                        </span>
+                                        <span x-show="entry.postre" class="bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                                            <i class="fa-solid fa-ice-cream text-amber-600 mr-1"></i> Postre: <strong x-text="entry.postre"></strong>
+                                        </span>
+                                    </div>
+                                    <p x-show="entry.obs" class="text-xs text-slate-500 mt-1 italic"><strong class="not-italic">Obs:</strong> <span x-text="entry.obs"></span></p>
+                                </div>
+                            </div>
+                            <button @click="removeFromCart(index)" class="text-red-500 hover:text-red-700 p-2 rounded-xl hover:bg-red-50 transition text-sm">
+                                <i class="fa-solid fa-trash-can"></i> Quitar
+                            </button>
+                        </div>
+                    </template>
+
+                    <!-- FORMULARIO DE ENVÍO / DATOS PERSONALES PARA WHATSAPP -->
+                    <div class="mt-8 bg-amber-50/50 p-6 rounded-2xl border border-amber-200/60">
+                        <h3 class="font-black text-slate-900 text-base mb-4 uppercase flex items-center gap-2">
+                            <i class="fa-brands fa-whatsapp text-green-600 text-xl"></i> Datos para enviar la solicitud a cotizar
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Tu Nombre y Apellido *</label>
+                                <input type="text" x-model="clientName" placeholder="Ej: Roberto Baronetto" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Modalidad de Pedido *</label>
+                                <select x-model="clientModalidad" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                                    <option value="Pedido Diario">Pedido Diario</option>
+                                    <option value="Plan Semanal Personalizado">Plan Semanal Personalizado</option>
+                                    <option value="Plan Mensual Personalizado">Plan Mensual Personalizado</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Modalidad de Envío *</label>
+                                <select x-model="clientEnvio" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                                    <option value="Retirar en el local">Retirar en el local</option>
+                                    <option value="Uber Moto">Uber Moto (Costo a cargo del cliente)</option>
+                                    <option value="Uber">Uber Auto (Costo a cargo del cliente)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Dirección de Entrega *</label>
+                                <input type="text" x-model="clientAddress" placeholder="Ej: Lamadrid 4021" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Observaciones Generales</label>
+                            <textarea x-model="clientObservations" placeholder="Comentarios adicionales, horarios preferidos de entrega, etc." class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" rows="2"></textarea>
+                        </div>
+
+                        <button @click="sendWhatsAppQuote()" class="w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 px-6 rounded-xl text-base transition shadow-lg flex items-center justify-center gap-3">
+                            <i class="fa-brands fa-whatsapp text-2xl"></i> Enviar mi selección para cotizar por WhatsApp
+                        </button>
+                        <p class="text-xs text-slate-500 text-center mt-3">Al hacer clic se abrirá WhatsApp directamente con el detalle completo de tus platos para que el negocio te devuelva el presupuesto personalizado.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA 3: QUIERO COMER ALGO DIFERENTE (PEDIDO ESPECIAL) -->
+        <section x-show="currentTab === 'especial'" x-transition>
+            <div class="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-900 uppercase">Quiero comer algo diferente</h2>
+                    <p class="text-slate-500 text-sm">¿Tenés ganas de alguna preparación especial que no está en el catálogo? Solicitatela a cocina.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre de la comida deseada *</label>
+                        <input type="text" x-model="specialDish.name" placeholder="Ej: Locro campero, Pastel de papa, etc." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Fecha deseada *</label>
+                            <input type="date" x-model="specialDish.date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cantidad de porciones *</label>
+                            <input type="number" min="1" x-model="specialDish.portions" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Descripción o ingredientes preferidos</label>
+                        <textarea x-model="specialDish.description" placeholder="Detallá cómo te gustaría que lo preparemos..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" rows="3"></textarea>
+                    </div>
+
+                    <button @click="sendSpecialWhatsApp()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-6 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Consultar Plato Especial por WhatsApp
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VISTA 4: MIS COMIDAS PENDIENTES -->
+        <section x-show="currentTab === 'pendientes'" x-transition>
+            <div class="max-w-3xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-100 p-6 sm:p-8">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <h2 class="text-xl font-black text-slate-900 uppercase">Mis Comidas Pendientes</h2>
+                    <p class="text-slate-500 text-sm">Flexibilidad total: si contrataste un plan y te quedó una porción sin consumir, podés reprogramarla acá.</p>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 text-sm text-amber-900">
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-circle-info text-amber-600 text-lg mt-0.5"></i>
+                        <div>
+                            <strong class="font-bold">¿Cómo funciona?</strong> No te descontamos automáticamente comidas no utilizadas ni establecemos vencimientos arbitrarios. Coordinamos la reprogramación directamente con vos por WhatsApp.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-slate-900">Comidas contratadas este mes</h4>
+                            <p class="text-xs text-slate-500">Plan Mensual / Semanal Activo</p>
+                        </div>
+                        <span class="bg-amber-600 text-white font-black px-4 py-2 rounded-xl text-base">0 Pendientes</span>
+                    </div>
+
+                    <button @click="sendPendingWhatsApp()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-3.5 px-6 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Coordinar reprogramación de comidas por WhatsApp
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-8 border-t border-slate-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-3">
+            <h3 class="text-white font-black tracking-wider uppercase text-lg">Delivery Los Amigos</h3>
+            <p class="text-xs text-slate-400 max-w-md mx-auto">Comer rico y casero puede ser más económico. Organiza tus almuerzos como quieras, elegí tus porciones y combiná tus platos favoritos.</p>
+            <div class="pt-2 text-xs text-slate-500">
+                &copy; 2026 Delivery Los Amigos. Todos los derechos reservados.
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL DE CONFIGURACIÓN DE PLATO AL SELECCIONAR -->
+    <div x-show="configModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" x-transition>
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 overflow-hidden" @click.away="configModalOpen = false">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-black text-xl text-slate-900" x-text="activeDish ? activeDish.name : ''"></h3>
+                <button @click="configModalOpen = false" class="text-slate-400 hover:text-slate-600 p-2 rounded-full">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Fecha de Consumo *</label>
+                    <input type="date" x-model="modalDate" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Cantidad de Porciones *</label>
+                    <input type="number" min="1" x-model="modalPortions" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                </div>
+
+                <!-- GUARNICIÓN SI APLICA -->
+                <div x-show="activeDish && activeDish.hasGuarnicion">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Seleccionar Guarnición *</label>
+                    <select x-model="modalGuarnicion" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                        <option value="">Elegí una opción</option>
+                        <option value="Puré de papas">Puré de papas</option>
+                        <option value="Puré mixto">Puré mixto</option>
+                        <option value="Ensalada rusa">Ensalada rusa</option>
+                        <option value="Ensalada mixta">Ensalada mixta</option>
+                        <option value="Verduras hervidas">Verduras hervidas</option>
+                        <option value="Papas fritas">Papas fritas</option>
+                    </select>
+                </div>
+
+                <!-- POSTRE OPCIONAL -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Postre Opcional</label>
+                    <select x-model="modalPostre" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium">
+                        <option value="">Sin postre</option>
+                        <option value="Flan casero con dulce de leche">Flan casero con dulce de leche</option>
+                        <option value="Fruta de estación">Fruta de estación</option>
+                        <option value="Budín de pan">Budín de pan</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Observaciones / Preferencias</label>
+                    <textarea x-model="modalObs" placeholder="Ej: Sin sal agregada, bien cocido, etc." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500" rows="2"></textarea>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button @click="configModalOpen = false" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-sm transition">
+                        Cancelar
+                    </button>
+                    <button @click="addToCartFromModal()" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl text-sm transition shadow">
+                        Agregar a mi plan
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE LOGICA (ALPINE.JS) -->
+    <script>
+        function app() {
+            return {
+                currentTab: 'catalogo',
+                searchQuery: '',
+                selectedCategory: 'todos',
+                cart: [],
+                configModalOpen: false,
+                activeDish: null,
+                modalDate: new Date().toISOString().split('T')[0],
+                modalPortions: 1,
+                modalGuarnicion: '',
+                modalPostre: '',
+                modalObs: '',
+
+                clientName: '',
+                clientModalidad: 'Plan Semanal Personalizado',
+                clientEnvio: 'Retirar en el local',
+                clientAddress: '',
+                clientObservations: '',
+
+                specialDish: {
+                    name: '',
+                    date: new Date().toISOString().split('T')[0],
+                    portions: 1,
+                    description: ''
+                },
+
+                dishes: [
+                    {
+                        id: 1,
+                        name: 'Albóndigas en salsa',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Jugosas albóndigas de carne vacuna seleccionada cocinadas a fuego lento en salsa de tomate casera.',
+                        ingredients: 'Carne vacuna, cebolla, morrón, tomate triturado, especias finas.',
+                        hasGuarnicion: true,
+                        image: 'image_89ab23.png'
+                    },
+                    {
+                        id: 2,
+                        name: 'Kipes (Keppes)',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Tradicionales kipes crujientes por fuera y jugosos por dentro, elaborados con carne picada de primera y trigo burgol.',
+                        ingredients: 'Carne vacuna magra, trigo burgol, cebolla, menta fresca, especias árabes.',
+                        hasGuarnicion: true,
+                        image: 'image_89ab58.png'
+                    },
+                    {
+                        id: 3,
+                        name: 'Estofado de carne',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Trocitos tiernos de carne vacuna estofados lentamente con verduras frescas y salsa de la abuela.',
+                        ingredients: 'Carne vacuna, papa, zanahoria, arvejas, cebolla, puré de tomate.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 4,
+                        name: 'Carnes a la plancha (Cerdo o Vaca)',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Corte magro cocinado a la plancha en su punto justo, jugoso y sabroso.',
+                        ingredients: 'Bife de cuadril o bondiola de cerdo, condimentos naturales.',
+                        hasGuarnicion: true,
+                        image: 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 5,
+                        name: 'Milanesas tradicionales',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Clásicas milanesas crujientes de carne vacuna empanadas artesanalmente.',
+                        ingredients: 'Nalga vacuna, pan rallado, huevo, ajo, perejil.',
+                        hasGuarnicion: true,
+                        image: 'https://images.unsplash.com/photo-1626500155167-5169290026e6?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 6,
+                        name: 'Supremas de pollo',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Tiernas pechugas de pollo rebozadas y doradas a la perfección.',
+                        ingredients: 'Pechuga de pollo, pan rallado, condimentos caseros.',
+                        hasGuarnicion: true,
+                        image: 'https://images.unsplash.com/photo-1604908176997-125f2596f37c?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 7,
+                        name: 'Guisados de arroz o fideos',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Guiso bien casero, espeso y reconfortante con verduras y carnes seleccionadas.',
+                        ingredients: 'Arroz o fideos moño/arrocito, verduras de estación, salsa, carne.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 8,
+                        name: 'Osobuco con verduras hervidas',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Osobuco tierno desprendiéndose del hueso acompañado de vegetales frescos.',
+                        ingredients: 'Osobuco vacuno, zanahoria, papa, calabaza, caldo casero.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1534939561126-855b8675edd7?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 9,
+                        name: 'Pollo al horno',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Pollo jugoso al horno con hierbas y verduras doradas.',
+                        ingredients: 'Presas de pollo, limón, romero, ajo, papas rústicas.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 10,
+                        name: 'Guisado de lentejas',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Nutritivo guiso de lentejas con panceta, chorizo colorado y verduras.',
+                        ingredients: 'Lentejas seleccionadas, cebolla, morrón, panceta, chorizo colorado, papa.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1546549032-9571cd6b27df?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 11,
+                        name: 'Tortillas (Papa, Acelga o Espinaca)',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Tortillas altas, doradas por fuera y jugosas por dentro, a elección.',
+                        ingredients: 'Huevos frescos, papas seleccionadas o verduras frescas de hoja.',
+                        hasGuarnicion: true,
+                        image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 12,
+                        name: 'Canelones caseros',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Canelones rellenos con espinaca y ricota (o carne), gratinados al horno con salsa y queso.',
+                        ingredients: 'Masa casera, ricota, acelga/espinaca o carne, salsa fileto, queso cremoso.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1551183053-bf91a1d81141?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 13,
+                        name: 'Marineras de carne',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Clásicos bifecitos pasados por pasta de harina y huevo, fritos y dorados.',
+                        ingredients: 'Carne vacuna, harina, huevo, leche, perejil.',
+                        hasGuarnicion: true,
+                        image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 14,
+                        name: 'Carré de cerdo',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Tierno carré de cerdo horneado con especias y jugoso en su interior.',
+                        ingredients: 'Carré de cerdo, miel/mostaza (opcional), hierbas, condimentos.',
+                        hasGuarnicion: true,
+                        image: 'https://images.unsplash.com/photo-1514944298352-f4d7321159d2?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 15,
+                        name: 'Lampreados',
+                        category: 'principal',
+                        categoryText: 'Plato Principal',
+                        description: 'Tradicional preparación tucumana de carne vacuna macerada, pasada por batido especial y frita.',
+                        ingredients: 'Carne vacuna seleccionada, harina, huevo, especias regionales.',
+                        hasGuarnicion: true,
+                        image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 16,
+                        name: 'Ensaladas (Rusa o Mixta)',
+                        category: 'guarnicion',
+                        categoryText: 'Guarnición',
+                        description: 'Ensalada fresca de papa y zanahoria con mayonesa (rusa) o mixta de lechuga, tomate y cebolla.',
+                        ingredients: 'Vegetales frescos de estación.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&w=600&q=80'
+                    },
+                    {
+                        id: 17,
+                        name: 'Puré o Verduras hervidas',
+                        category: 'guarnicion',
+                        categoryText: 'Guarnición',
+                        description: 'Puré de papas/zapallo o vegetales hervidos seleccionados.',
+                        ingredients: 'Papa, calabaza, zanahoria, manteca, leche.',
+                        hasGuarnicion: false,
+                        image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&w=600&q=80'
+                    }
+                ],
+
+                get filteredDishes() {
+                    return this.dishes.filter(dish => {
+                        const matchesSearch = dish.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || 
+                                              dish.description.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        const matchesCategory = this.selectedCategory === 'todos' || dish.category === this.selectedCategory;
+                        return matchesSearch && matchesCategory;
+                    });
+                },
+
+                openConfigModal(dish) {
+                    this.activeDish = dish;
+                    this.modalPortions = 1;
+                    this.modalGuarnicion = dish.hasGuarnicion ? 'Puré de papas' : '';
+                    this.modalPostre = '';
+                    this.modalObs = '';
+                    this.configModalOpen = true;
+                },
+
+                addToCartFromModal() {
+                    if (!this.modalDate) {
+                        alert('Por favor seleccioná una fecha');
+                        return;
+                    }
+                    this.cart.push({
+                        name: this.activeDish.name,
+                        image: this.activeDish.image,
+                        date: this.modalDate,
+                        portions: this.modalPortions,
+                        guarnicion: this.modalGuarnicion,
+                        postre: this.modalPostre,
+                        obs: this.modalObs
+                    });
+                    this.configModalOpen = false;
+                    this.currentTab = 'planificador';
+                },
+
+                removeFromCart(index) {
+                    this.cart.splice(index, 1);
+                },
+
+                sendWhatsAppQuote() {
+                    if (!this.clientName.trim()) {
+                        alert('Por favor ingresá tu nombre y apellido.');
+                        return;
+                    }
+                    if (!this.clientAddress.trim()) {
+                        alert('Por favor ingresá tu dirección de entrega.');
+                        return;
+                    }
+
+                    let detallePlatos = this.cart.map((item, idx) => 
+                        `\n- Plato ${idx+1}: ${item.name} | Fecha: ${item.date} | Porciones: ${item.portions}${item.guarnicion ? ' | Guarnición: '+item.guarnicion : ''}${item.postre ? ' | Postre: '+item.postre : ''}${item.obs ? ' | Obs: '+item.obs : ''}`
+                    ).join('');
+
+                    let totalComidas = this.cart.reduce((sum, i) => sum + parseInt(i.portions), 0);
+
+                    let mensaje = `Hola! Quiero organizar mis almuerzos con Delivery Los Amigos.\n` +
+                                  `Nombre: ${this.clientName}\n` +
+                                  `Modalidad: ${this.clientModalidad}\n` +
+                                  `Cantidad total de comidas: ${totalComidas}\n` +
+                                  `Mi selección por fecha:${detallePlatos}\n` +
+                                  `Observaciones: ${this.clientObservations || 'Ninguna'}\n` +
+                                  `Entrega: ${this.clientEnvio}\n` +
+                                  `Dirección: ${this.clientAddress}\n` +
+                                  `Solicito que evalúen mi selección y me envíen el presupuesto personalizado. Gracias!`;
+
+                    let url = `https://api.whatsapp.com/send?phone=5493815182274&text=${encodeURIComponent(mensaje)}`;
+                    window.open(url, '_blank');
+                },
+
+                sendSpecialWhatsApp() {
+                    if (!this.specialDish.name.trim()) {
+                        alert('Por favor ingresá el nombre de la comida deseada.');
+                        return;
+                    }
+                    let mensaje = `Hola! Quiero solicitar una comida especial con Delivery Los Amigos.\n` +
+                                  `Comida deseada: ${this.specialDish.name}\n` +
+                                  `Fecha deseada: ${this.specialDish.date}\n` +
+                                  `Cantidad de porciones: ${this.specialDish.portions}\n` +
+                                  `Descripción/Preferencias: ${this.specialDish.description || 'Ninguna'}\n` +
+                                  `Solicito que evalúen si pueden elaborarla y cotizarla. Gracias!`;
+
+                    let url = `https://api.whatsapp.com/send?phone=5493815182274&text=${encodeURIComponent(mensaje)}`;
+                    window.open(url, '_blank');
+                },
+
+                sendPendingWhatsApp() {
+                    let mensaje = `Hola! Quiero consultar sobre mis comidas pendientes en Delivery Los Amigos para coordinar su utilización en otras fechas. Gracias!`;
+                    let url = `https://api.whatsapp.com/send?phone=5493815182274&text=${encodeURIComponent(mensaje)}`;
+                    window.open(url, '_blank');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
